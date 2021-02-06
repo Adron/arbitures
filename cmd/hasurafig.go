@@ -21,30 +21,62 @@ path and has already been updated, this command will not process the edit.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Editing the Hasura configuration file located at %v with \nthe new URI of %v.\n...\n\n",
 			configPath, hasuraUri)
-		if configExists(){
-			text := getConfigContents()
+		if configExists(configPath) {
+			text := getConfigContents(configPath)
 			rootHasuraUri := strings.Trim(strings.Trim(hasuraUri, string('"')), "/")
 			rootHasuraUri = strings.TrimRight(rootHasuraUri, ":8080")
 			text = strings.Replace(text, "http://localhost", rootHasuraUri, 2)
-			fmt.Printf("New config text:\n\n%v", text)
+			fmt.Printf("New config text:\n\n%vWriting contents.\n", text)
+			renameConfigFile(configPath)
+			writeNewConfigFile(configPath, text)
 		} else {
 			fmt.Printf("The configuration file doesn't appear to exist at %v.\n", configPath)
 		}
 	},
 }
 
-func getConfigContents() string {
-	content, err := ioutil.ReadFile(configPath)
+func writeNewConfigFile(configFile string, rewrittenConfiguration string) {
+	file, err := os.Create(configFile)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	l, err := file.WriteString(rewrittenConfiguration)
+	if err != nil {
+		fmt.Println(err)
+		file.Close()
+		return
+	}
+	fmt.Println(l, "Configuration file written successfully.")
+	err = file.Close()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func renameConfigFile(existingConfigFile string) {
+	oldConfigFile := existingConfigFile + ".old"
+	oldConfigErr := os.Remove(oldConfigFile)
+	if oldConfigErr != nil {
+		fmt.Println(oldConfigErr)
+	}
+	err := os.Rename(existingConfigFile, oldConfigFile)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func getConfigContents(configFile string) string {
+	content, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Convert []byte to string and print to screen
 	return string(content)
 }
 
-func configExists() bool {
-	if _, err := os.Stat(configPath); err == nil {
+func configExists(configFile string) bool {
+	if _, err := os.Stat(configFile); err == nil {
 		return true
 	}
 	return false
