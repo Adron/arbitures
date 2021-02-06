@@ -21,14 +21,12 @@ path and has already been updated, this command will not process the edit.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Editing the Hasura configuration file located at %v with \nthe new URI of %v.\n...\n\n",
 			configPath, hasuraUri)
-
 		if configExists(){
 			text := getConfigContents()
 			rootHasuraUri := strings.Trim(strings.Trim(hasuraUri, string('"')), "/")
 			rootHasuraUri = strings.TrimRight(rootHasuraUri, ":8080")
 			text = strings.Replace(text, "http://localhost", rootHasuraUri, 2)
 			fmt.Printf("New config text:\n\n%v", text)
-
 		} else {
 			fmt.Printf("The configuration file doesn't appear to exist at %v.\n", configPath)
 		}
