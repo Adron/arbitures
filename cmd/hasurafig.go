@@ -23,8 +23,7 @@ path and has already been updated, this command will not process the edit.`,
 			configPath, hasuraUri)
 		if configExists(configPath) {
 			text := getConfigContents(configPath)
-			rootHasuraUri := strings.Trim(strings.Trim(hasuraUri, string('"')), "/")
-			rootHasuraUri = strings.TrimRight(rootHasuraUri, ":8080")
+			rootHasuraUri := cleanupHasuraUri()
 			text = strings.Replace(text, "http://localhost", rootHasuraUri, 2)
 			fmt.Printf("New config text:\n\n%vWriting contents.\n", text)
 			renameConfigFile(configPath)
@@ -33,6 +32,15 @@ path and has already been updated, this command will not process the edit.`,
 			fmt.Printf("The configuration file doesn't appear to exist at %v.\n", configPath)
 		}
 	},
+}
+
+func cleanupHasuraUri() string {
+	rootHasuraUri := strings.Trim(strings.Trim(hasuraUri, string('"')), "/")
+	rootHasuraUri = strings.TrimRight(rootHasuraUri, ":8080")
+	if !strings.HasPrefix("http://", rootHasuraUri) {
+		rootHasuraUri = "http://" + rootHasuraUri
+	}
+	return rootHasuraUri
 }
 
 func writeNewConfigFile(configFile string, rewrittenConfiguration string) {
